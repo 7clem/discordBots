@@ -5,13 +5,20 @@
 - Pierre - Feuille - Ciseaux (TODO)
 
 ## Install ##
-- git clone \<repo\>
-- cd \<repo\>
-- python -m virtualenv .env
-- source .env/bin/activate to enter the virtual environment
-- pip install -r requirements.txt
 
-(to install the requirements in the current environment)
+- executer le script INSTALL
+> sh INSTALL.txt
+- ou bien les commandes ci-dessous (les lignes sans #)
+> \# télécharge le code  
+> git clone https://github.com/7clem/discordBots.git  
+\# entre dans le dossier          
+> cd discordBots  
+> \# crée un environnement virtuel    
+> python -m venv .env      
+> \# active l'environnement  
+> source .env/bin/activate      
+>\# installe tous les paquets requis.  
+> python3 -m pip install -U -r requirements.txt  
 
 ## Executer ##
 - créer un compte discord
