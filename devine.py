@@ -10,10 +10,10 @@ devine_diff = None
 devine_accept = None
 
 ## state pattern / Motif état
-class Bot(discord.Client):
-    def __init__(self, state):
+class DiscordBot(discord.Client):
+    def __init__(self, initialState):
         super().__init__()
-        self.transitionTo(Waiting(self))
+        self.transitionTo(initialState)
 
     def transition(self, state):
         self.state = state
@@ -42,18 +42,19 @@ class BotAbstractState:
     def on_message(self, message):
         raise NotImplementedError("This is an abstract base class.")
 
-class Waiting(BotAbstractState):
+class DevineWaiting(Devine):
     name = 'Waiting'
     allowed = ['Devine']
 
-    def on_message(msg):
+    async def on_message(msg):
         if msg.content.lower() == "devine":
-            await msg.channel.send("Ok Jouons à Devine-le-nombre !")
-
-    def
+            await msg.channel.send("Ok, jouons à Devine-le-nombre !")
+        else:
+            await msg.channel.send("Les commandes sont : devine")
 
 class Devine(BotAbstractState):
-    def __init__(self, )
+    def __init__(self, context:DiscordClient):
+        super().__init__(context)
 
 def usage():
     return """
@@ -67,20 +68,21 @@ def usage():
 
 
 
-@client.event
-async def on_message(msg):
-    if not state:
-
-    if msg.content == "pfc":
-        await msg.channel.send("C'est mon nom.")
-    elif msg.content == "joue":
-        await msg.channel.send("prêt ? 3...")
-    elif msg.content == "aide" or msg.content == "help" or msg.content == 'h':
-        await msg.channel.send(usage())
-    elif msg.content == "devine le nombre":
-        state = DevineLeNombre()
+# @client.event
+# async def on_message(msg):
+#     if not state:
+#
+#     if msg.content == "pfc":
+#         await msg.channel.send("C'est mon nom.")
+#     elif msg.content == "joue":
+#         await msg.channel.send("prêt ? 3...")
+#     elif msg.content == "aide" or msg.content == "help" or msg.content == 'h':
+#         await msg.channel.send(usage())
+#     elif msg.content == "devine le nombre":
+#         state = DevineLeNombre()
 
 if __name__ == "__main__":
-    bot = Bot()
-    bot.run("ODQ3NDIxODQzMDM1NjUyMDk2.YK91Fw.eHukGUz58Ixwhw0FLEqpyU_Z214")
+    bot = DiscordBot(DevineWaiting)
+    discordBotToken = argv[1]
+    bot.run(discordBotToken)
     state = None
