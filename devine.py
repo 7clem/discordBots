@@ -4,122 +4,97 @@ import discord
 import random
 import sqlite3
 import sys
+import math
+#from botStateMachine import BotStateMachine
 
-waiting = None
-devine = None
-devine_diff = None
-devine_accept = None
+def listeNombres(s):
+    mots = s.split()
+    print(mots)
+    nombres = []
+    for m in mots:
+        try:
+            n = int(m.strip('.,!?'))
+            print("trouvé", n)
+            nombres.append(n)
+        except:
+            pass
+    return nombres
 
-## state pattern / Motif état
-class DiscordBot(discord.Client):
+def contient(chaine, sub):
+    if type(sub) == str:
+        return chaine.find(sub) != -1
+    else:
+        for s in sub:
+            if chaine.find(s) != -1:
+                return True
+        return False
+
+class DevineJoueur(discord.Client):
     def __init__(self):
         super().__init__()
-        self.transitionTo(DevineWaiting(self))
+        self.intervale = []
+        self.essai = 0
+        self.joue = False
 
-    def transitionTo(self, state):
-        self.state = state
+    async def on_ready(self):
+        print("Le bot discord est actif.")
+
+    def divise(self):
+        self.essai = math.floor(sum(self.intervale) / 2)
+
+    def tropHaut(self):
+        self.intervale = [self.intervale[0], self.essai]
+
+    def tropBas(self):
+        self.intervale = [self.essai, self.intervale[1]]
+
+    def lireIntervale(self, s):
+        self.joue = True
+        nbs = listeNombres(s)
+        if len(nbs) == 2:
+            self.intervale = nbs
+            self.joue = True
+            self.divise()
 
     async def on_message(self, msg):
-        # delegate to current state
-        await self.state.on_message(msg)
-
-class BotAbstractState:
-    name = "BotAbstractState"
-    allowed = []
-
-    def __init__(self, context):
-        self.context = context
-
-    def switch(self, state):
-        if state.name in self.allowed:
-            print ('Current:', self, ' -> switched to new state:', state.name)
-            self.__class__ = state
+        if (msg.author == self.user):
+            return
+        cont = msg.content.lower()
+        print(cont)
+        prefix = "Ok, j'ai choisi un nombre au hazard entre ".lower()
+        if cont.startswith(prefix):
+            self.lireIntervale(cont)
+        elif contient(cont,"gagné") or contient(cont, "trouvé"):
+            self.joue = False
+            return
         else:
-            print ('Current:',self, ' -> switching to ', state.name, ' not possible.')
+            if cont.isnumeric():
+                self.essai = int(cont)
+                if self.essai > self.intervale[0]:
+                    self.intervale[0] = essai
+                if self.essai > intervale[1]:
+                    self.intervale[1] = self.essai
+                self.divise()
+            elif contient(cont, ["haut", "élévé"]) or cont == 'h':
+                self.tropHaut()
+            elif contient(cont, ["bas", "petit"]) or cont == 'b':
+                self.tropBas()
+            self.divise()
+            await msg.channel.send(str(self.essai))
+
+
 
     def __str__(self):
-        return state.name
-
-    async def on_message(self, message):
-        raise NotImplementedError("This is an abstract base class. on_message()")
-
-class Devine(BotAbstractState):
-    def __init__(self, context:discord.Client):
-        super().__init__(context)
-
-    async def on_message(self, msg):
-         print(Jeu Devine actif)
-
-class DevineJeuEnCours(Devine):
-    def __init__(self, context:discord.Client, difficult):
-        super().__init__(context)
-        self.nombre = random.randint(1, difficult)
-
-    async def on_message(self, msg):
-        with int(msg) as i:
-            if i < self.nombre:
-                await msg.channel.send("Trop petit")
-
-class DevineDifficulte(Devine):
-    difficultes = [10, 100, 1000]
-
-    def __init__(self, context:discord.Client):
-        super().__init__(context)
-
-    async def on_message(self, msg):
-        possibilities = [str(x) for x in difficultes]
-        print(possibilities)
-        if msg.content in possibilities:
-            nb = int(msg.content)
-            self.context.transitionTo(DevineJeuEnCours(self.context, nb))
-            await msg.channel.send(f"Ok. J'ai un nombre entre 1 et {nb}. Devine-le")
-        else:
-            await msg.channel.send(f"On attend ici un nombre parmi {possibilities}")
-
-
-class DevineWaiting(Devine):
-    name = 'Waiting'
-    allowed = ['Devine']
-
-    async def on_message(msg):
-        if msg.content.lower() == "devine":
-            await msg.channel.send("Ok, jouons à Devine-le-nombre !")
-            self.context.transitionTo(DevineDifficulte(self.context))
-        elif msg.content.lower() in ['h', 'help', 'aide', 'commandes']:
-            await msg.channel.send("devine -> demarre le jeu 'Devine-Le-nombre'")
-
-
-def usage():
-    return """
-    pfc -> joue à pierre feuille ciseaux.
-    devine mon nombre -> le bot va trouver ton nombre
-    pense à un nombre -> le bot va
-    joue -> démarre une partie
-    stop -> arrète la partie
-    score -> compte les points
-    """
-
-
-
-# @client.event
-# async def on_message(msg):
-#     if not state:
-#
-#     if msg.content == "pfc":
-#         await msg.channel.send("C'est mon nom.")
-#     elif msg.content == "joue":
-#         await msg.channel.send("prêt ? 3...")
-#     elif msg.content == "aide" or msg.content == "help" or msg.content == 'h':
-#         await msg.channel.send(usage())
-#     elif msg.content == "devine le nombre":
-#         state = DevineLeNombre()
+        i = str(self.intervale)
+        e = str(self.essai)
+        j = str(self.joue)
+        return f"DevineJoueur intervale={i}, essai={e}, joue={j}"
 
 if __name__ == "__main__":
-    bot = DiscordBot()
+    bot = DevineJoueur()
+    #etat = BotStateMachine(bot)
     discordBotToken = ""
     with open(sys.argv[1]) as dbtFile:
         discordBotToken = dbtFile.readlines()[0]
-    print("Discord Bot running")
-    bot.run(discordBotToken)
 
-    state = None
+    bot.run(discordBotToken)
