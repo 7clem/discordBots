@@ -1,2 +1,3 @@
 .env
 discordBotToken.txt
+scores.sqlite3.db
